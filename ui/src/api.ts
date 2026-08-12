@@ -15,6 +15,7 @@ export const apiUrl = import.meta.env.VITE_API_URL ?? "/api";
 export const demoMode = import.meta.env.VITE_DEMO_MODE === "true";
 
 const host = window.location.hostname || "localhost";
+const repositoryUrl = "https://github.com/TEJASV30/aegis";
 
 export function fallbackPlatformStatus(): PlatformStatus {
   if (demoMode) {
@@ -65,23 +66,53 @@ export function fallbackPlatformStatus(): PlatformStatus {
       synthetic_generation_enabled: true,
       services: [
         {
+          name: "Apache Airflow",
+          url: `${repositoryUrl}/tree/main/airflow`,
+          purpose: "Orchestrates data, feature, training, and monitoring workflows",
+        },
+        {
+          name: "MLflow",
+          url: `${repositoryUrl}/tree/main/src/fraud_platform/models`,
+          purpose: "Tracks candidate runs, releases, promotion, and rollback",
+        },
+        {
+          name: "PostgreSQL",
+          url: `${repositoryUrl}/tree/main/deploy/postgres`,
+          purpose: "Stores transactions, predictions, reviews, and outcomes",
+        },
+        {
+          name: "FastAPI",
+          url: `${repositoryUrl}/blob/main/src/fraud_platform/serving/main.py`,
+          purpose: "Serves idempotent decisions, explanations, and review actions",
+        },
+        {
+          name: "Apache Superset",
+          url: `${repositoryUrl}/tree/main/deploy/superset`,
+          purpose: "Presents operational risk, latency, outcome, and drift dashboards",
+        },
+        {
+          name: "Prometheus",
+          url: `${repositoryUrl}/tree/main/deploy/prometheus`,
+          purpose: "Collects request, latency, throughput, and health signals",
+        },
+        {
           name: "Source code",
-          url: "https://github.com/iamhark/aegis",
+          url: repositoryUrl,
           purpose: "Review the complete open-source application",
         },
         {
           name: "Architecture",
-          url: "https://github.com/iamhark/aegis/blob/main/docs/ARCHITECTURE.md",
+          url: `${repositoryUrl}/blob/main/docs/ARCHITECTURE.md`,
           purpose: "Understand data, training, serving, and monitoring",
         },
         {
           name: "Decision policy",
-          url: "https://github.com/iamhark/aegis/blob/main/docs/DECISION_POLICY.md",
+          url: `${repositoryUrl}/blob/main/docs/DECISION_POLICY.md`,
           purpose: "Review thresholds, capacity, and human decisions",
         },
         {
           name: "Limitations",
-          url: "https://github.com/iamhark/aegis/blob/main/docs/LIMITATIONS.md",
+          url: `${repositoryUrl}/blob/main/docs/LIMITATIONS.md`,
           purpose: "Separate measured, simulated, and production claims",
         },
       ],
