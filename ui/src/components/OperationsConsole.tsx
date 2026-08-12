@@ -24,22 +24,73 @@ function formatDate(value: string): string {
   }).format(new Date(value));
 }
 
-const serviceLabels: Record<string, { name: string; purpose: string }> = {
+type ServiceLabel = {
+  name: string;
+  purpose: string;
+  meta: string;
+  runtime: boolean;
+};
+
+const serviceLabels: Record<string, ServiceLabel> = {
   "Apache Airflow": {
     name: "Automated jobs",
     purpose: "View scheduled data, training, and monitoring jobs",
+    meta: "Apache Airflow",
+    runtime: true,
   },
   MLflow: {
     name: "Model versions",
     purpose: "Compare results and approved versions",
+    meta: "MLflow",
+    runtime: true,
+  },
+  PostgreSQL: {
+    name: "Risk data",
+    purpose: "Inspect the transaction, decision, and review data layer",
+    meta: "PostgreSQL",
+    runtime: true,
   },
   "Apache Superset": {
     name: "Reports and dashboards",
     purpose: "Explore risk, speed, outcomes, and data changes",
+    meta: "Apache Superset",
+    runtime: true,
   },
   FastAPI: {
-    name: "API documentation",
+    name: "Decision API",
     purpose: "Inspect and test the payment-checking API",
+    meta: "FastAPI",
+    runtime: true,
+  },
+  Prometheus: {
+    name: "Service monitoring",
+    purpose: "Review latency, throughput, errors, and health signals",
+    meta: "Prometheus",
+    runtime: true,
+  },
+  "Source code": {
+    name: "Source code",
+    purpose: "Review the complete open-source application",
+    meta: "GitHub repository",
+    runtime: false,
+  },
+  Architecture: {
+    name: "Architecture",
+    purpose: "Understand data, training, serving, and monitoring",
+    meta: "Project documentation",
+    runtime: false,
+  },
+  "Decision policy": {
+    name: "Decision policy",
+    purpose: "Review thresholds, capacity, and human decisions",
+    meta: "Project documentation",
+    runtime: false,
+  },
+  Limitations: {
+    name: "Limitations",
+    purpose: "Separate measured, simulated, and production claims",
+    meta: "Project documentation",
+    runtime: false,
   },
 };
 
@@ -182,9 +233,18 @@ export function OperationsConsole({
 
       {demoMode && (
         <div className="notice preview-notice">
-          Hosted demo: system figures are an offline evaluation snapshot and generated
-          data remains in this browser session. Use the Docker application for persistent
-          services and records.
+          Hosted demo: only the browser experience runs on GitHub Pages. The repository
+          still includes Airflow, MLflow, PostgreSQL, FastAPI, Superset, and Prometheus;
+          start the Docker application to run those services together. System figures are
+          an offline evaluation snapshot, and generated data remains in this browser session.{" "}
+          <a
+            href="https://github.com/TEJASV30/aegis#one-command-demonstration"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Run the complete platform
+          </a>
+          .
         </div>
       )}
       {error && <div className="notice error">{error}</div>}
@@ -346,19 +406,40 @@ export function OperationsConsole({
 
         <div className="operation-card">
           <div className="operation-icon"><Icon name="tower" /></div>
-          <p className="eyebrow"><span /> Connected tools</p>
-          <h2>Services</h2>
+          <p className="eyebrow">
+            <span /> {demoMode ? "Open-source stack" : "Connected tools"}
+          </p>
+          <h2>{demoMode ? "Platform services" : "Services"}</h2>
+          {demoMode && (
+            <p>
+              The hosted page is the browser layer. Runtime services are present in the
+              repository and launch through Docker.
+            </p>
+          )}
           <div className="service-list">
             {platform.services.map((service) => {
               const label = serviceLabels[service.name] ?? {
                 name: service.name,
                 purpose: service.purpose,
+                meta: "Platform resource",
+                runtime: false,
               };
               return (
-                <a href={service.url} target="_blank" rel="noreferrer" key={service.name}>
-                  <span>
+                <a
+                  href={service.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  key={service.name}
+                  aria-label={`Open ${service.name}`}
+                >
+                  <span className="service-copy">
                     <strong>{label.name}</strong>
                     <small>{label.purpose}</small>
+                    <span className="service-meta">
+                      <i />
+                      {label.meta}
+                      {label.runtime && demoMode ? " · Runs with Docker" : ""}
+                    </span>
                   </span>
                   <span className="service-arrow" aria-hidden="true"><Icon name="arrow" /></span>
                 </a>
