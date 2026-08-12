@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { demoMode, platformApi } from "../api";
-import { createSimulatedSummary, simulateSyntheticBatch } from "../simulation";
+import {
+  loadDemoOperationsState,
+  resetDemoOperationsState,
+  saveDemoOperationsState,
+  simulateSyntheticBatch,
+} from "../simulation";
 import type {
   DataSummary,
   PlatformStatus,
@@ -98,22 +103,25 @@ export function OperationsConsole({
   platform,
   onPlatformRefresh,
 }: OperationsConsoleProps) {
-  const [summary, setSummary] = useState<DataSummary>(() =>
-    demoMode
-      ? createSimulatedSummary()
-      : {
-          raw_transactions: 0,
-          labeled_transactions: 0,
-          observed_fraud_rate: null,
-          production_predictions: 0,
-          open_reviews: 0,
-          latest_event_timestamp: null,
-        },
+  const [initialDemoState] = useState(() =>
+    demoMode ? loadDemoOperationsState() : null,
   );
-  const [rows, setRows] = useState(100_000);
-  const [days, setDays] = useState(120);
-  const [seed, setSeed] = useState(42);
-  const [batch, setBatch] = useState<SyntheticGenerationResponse | null>(null);
+  const [summary, setSummary] = useState<DataSummary>(() =>
+    initialDemoState?.summary ?? {
+      raw_transactions: 0,
+      labeled_transactions: 0,
+      observed_fraud_rate: null,
+      production_predictions: 0,
+      open_reviews: 0,
+      latest_event_timestamp: null,
+    },
+  );
+  const [rows, setRows] = useState(initialDemoState?.rows ?? 100_000);
+  const [days, setDays] = useState(initialDemoState?.days ?? 120);
+  const [seed, setSeed] = useState(initialDemoState?.seed ?? 42);
+  const [batch, setBatch] = useState<SyntheticGenerationResponse | null>(
+    initialDemoState?.batch ?? null,
+  );
   const [loading, setLoading] = useState(!demoMode);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -150,20 +158,55 @@ export function OperationsConsole({
             seed,
             start: new Date(Date.now() - days * 86_400_000).toISOString(),
           });
-      setBatch(result);
-      setSummary((current) => ({
-        ...current,
-        raw_transactions: current.raw_transactions + result.inserted_rows,
-        labeled_transactions: current.labeled_transactions + result.inserted_rows,
+      const existingFraudRows =
+        summary.labeled_transactions * (summary.observed_fraud_rate ?? 0);
+      const nextLabeledTransactions =
+        summary.labeled_transactions + result.inserted_rows;
+      const nextSummary: DataSummary = {
+        ...summary,
+        raw_transactions: summary.raw_transactions + result.inserted_rows,
+        labeled_transactions: nextLabeledTransactions,
         latest_event_timestamp: result.event_end,
-        observed_fraud_rate: result.fraud_rate,
-      }));
+        observed_fraud_rate:
+          nextLabeledTransactions === 0
+            ? null
+            : (existingFraudRows + result.fraud_rows) / nextLabeledTransactions,
+      };
+      setBatch(result);
+      setSummary(nextSummary);
+      if (demoMode) {
+        const persisted = saveDemoOperationsState({
+          schema_version: 1,
+          summary: nextSummary,
+          batch: result,
+          rows,
+          days,
+          seed,
+          saved_at: new Date().toISOString(),
+        });
+        setMessage(
+          persisted
+            ? "Test data saved in this browser."
+            : "Test data generated for this session; browser storage is unavailable.",
+        );
+      }
       if (!demoMode) await refreshSummary();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Generation failed");
     } finally {
       setLoading(false);
     }
+  }
+
+  function resetDemoData() {
+    const reset = resetDemoOperationsState();
+    setSummary(reset.summary);
+    setBatch(reset.batch);
+    setRows(reset.rows);
+    setDays(reset.days);
+    setSeed(reset.seed);
+    setError(null);
+    setMessage("Hosted demo data reset to the baseline snapshot.");
   }
 
   async function reloadModel() {
@@ -236,7 +279,8 @@ export function OperationsConsole({
           Hosted demo: only the browser experience runs on GitHub Pages. The repository
           still includes Airflow, MLflow, PostgreSQL, FastAPI, Superset, and Prometheus;
           start the Docker application to run those services together. System figures are
-          an offline evaluation snapshot, and generated data remains in this browser session.{" "}
+          an offline evaluation snapshot, and generated data is saved in this browser until
+          you reset it.{" "}
           <a
             href="https://github.com/TEJASV30/aegis#one-command-demonstration"
             target="_blank"
@@ -390,9 +434,21 @@ export function OperationsConsole({
               />
             </label>
           </div>
-          <button className="primary-button" type="submit" disabled={loading}>
-            {loading ? "Generating…" : "Generate test data"}
-          </button>
+          <div className="generator-actions">
+            <button className="primary-button" type="submit" disabled={loading}>
+              {loading ? "Generating…" : "Generate test data"}
+            </button>
+            {demoMode && (
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={loading}
+                onClick={resetDemoData}
+              >
+                Reset demo data
+              </button>
+            )}
+          </div>
           {batch && (
             <div className="batch-result">
               <strong>{formatNumber(batch.inserted_rows)} transactions created</strong>

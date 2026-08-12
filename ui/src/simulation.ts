@@ -18,6 +18,17 @@ const categories = [
   "cash_withdrawal",
 ];
 const channels = ["pos", "ecommerce", "mobile", "atm"];
+const demoOperationsStorageKey = "aegis-demo-operations-v1";
+
+export type DemoOperationsState = {
+  schema_version: 1;
+  summary: DataSummary;
+  batch: SyntheticGenerationResponse | null;
+  rows: number;
+  days: number;
+  seed: number;
+  saved_at: string;
+};
 
 function pick<T>(values: T[]): T {
   return values[Math.floor(Math.random() * values.length)];
@@ -175,15 +186,126 @@ export function generateReviewItems(count: number): ReviewItem[] {
 }
 
 export function createSimulatedSummary(): DataSummary {
-  const rawTransactions = randomInteger(80_000, 140_000);
   return {
-    raw_transactions: rawTransactions,
-    labeled_transactions: Math.floor(rawTransactions * 0.92),
-    observed_fraud_rate: 0.040 + Math.random() * 0.008,
-    production_predictions: randomInteger(25_000, 65_000),
-    open_reviews: randomInteger(18, 80),
-    latest_event_timestamp: new Date().toISOString(),
+    raw_transactions: 100_000,
+    labeled_transactions: 92_000,
+    observed_fraud_rate: 0.044,
+    production_predictions: 50_000,
+    open_reviews: 42,
+    latest_event_timestamp: "2026-08-12T06:33:51.442Z",
   };
+}
+
+function isFiniteNonNegative(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0;
+}
+
+function isValidSummary(value: unknown): value is DataSummary {
+  if (typeof value !== "object" || value === null) return false;
+  const summary = value as Partial<DataSummary>;
+  return (
+    isFiniteNonNegative(summary.raw_transactions) &&
+    isFiniteNonNegative(summary.labeled_transactions) &&
+    (summary.observed_fraud_rate === null ||
+      (isFiniteNonNegative(summary.observed_fraud_rate) &&
+        summary.observed_fraud_rate <= 1)) &&
+    isFiniteNonNegative(summary.production_predictions) &&
+    isFiniteNonNegative(summary.open_reviews) &&
+    (summary.latest_event_timestamp === null ||
+      typeof summary.latest_event_timestamp === "string")
+  );
+}
+
+function isValidBatch(value: unknown): value is SyntheticGenerationResponse | null {
+  if (value === null) return true;
+  if (typeof value !== "object") return false;
+  const batch = value as Partial<SyntheticGenerationResponse>;
+  return (
+    isFiniteNonNegative(batch.requested_rows) &&
+    isFiniteNonNegative(batch.inserted_rows) &&
+    isFiniteNonNegative(batch.fraud_rows) &&
+    isFiniteNonNegative(batch.fraud_rate) &&
+    batch.fraud_rate <= 1 &&
+    typeof batch.event_start === "string" &&
+    typeof batch.event_end === "string" &&
+    isFiniteNonNegative(batch.seed)
+  );
+}
+
+function createDefaultDemoOperationsState(): DemoOperationsState {
+  return {
+    schema_version: 1,
+    summary: createSimulatedSummary(),
+    batch: null,
+    rows: 100_000,
+    days: 120,
+    seed: 42,
+    saved_at: new Date().toISOString(),
+  };
+}
+
+function isValidDemoOperationsState(value: unknown): value is DemoOperationsState {
+  if (typeof value !== "object" || value === null) return false;
+  const state = value as Partial<DemoOperationsState>;
+  return (
+    state.schema_version === 1 &&
+    isValidSummary(state.summary) &&
+    isValidBatch(state.batch) &&
+    typeof state.rows === "number" &&
+    Number.isInteger(state.rows) &&
+    state.rows >= 100 &&
+    state.rows <= 100_000 &&
+    typeof state.days === "number" &&
+    Number.isInteger(state.days) &&
+    state.days >= 7 &&
+    state.days <= 730 &&
+    typeof state.seed === "number" &&
+    Number.isInteger(state.seed) &&
+    isFiniteNonNegative(state.seed) &&
+    typeof state.saved_at === "string"
+  );
+}
+
+export function saveDemoOperationsState(state: DemoOperationsState): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    window.localStorage.setItem(demoOperationsStorageKey, JSON.stringify(state));
+    return true;
+  } catch {
+    // Storage can be unavailable in strict privacy modes. The demo still works in memory.
+    return false;
+  }
+}
+
+export function loadDemoOperationsState(): DemoOperationsState {
+  if (typeof window !== "undefined") {
+    try {
+      const stored = window.localStorage.getItem(demoOperationsStorageKey);
+      if (stored !== null) {
+        const parsed: unknown = JSON.parse(stored);
+        if (isValidDemoOperationsState(parsed)) return parsed;
+      }
+    } catch {
+      // Replace malformed or inaccessible storage with a clean, versioned snapshot.
+    }
+  }
+
+  const fallback = createDefaultDemoOperationsState();
+  saveDemoOperationsState(fallback);
+  return fallback;
+}
+
+export function resetDemoOperationsState(): DemoOperationsState {
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.removeItem(demoOperationsStorageKey);
+    } catch {
+      // Continue with an in-memory reset if storage is unavailable.
+    }
+  }
+  const reset = createDefaultDemoOperationsState();
+  saveDemoOperationsState(reset);
+  return reset;
 }
 
 export function simulateSyntheticBatch(
@@ -191,7 +313,11 @@ export function simulateSyntheticBatch(
   seed: number,
   days: number,
 ): SyntheticGenerationResponse {
-  const fraudRate = 0.040 + Math.random() * 0.008;
+  let state = (seed >>> 0) + 0x6d2b79f5;
+  state = Math.imul(state ^ (state >>> 15), state | 1);
+  state ^= state + Math.imul(state ^ (state >>> 7), state | 61);
+  const seededFraction = ((state ^ (state >>> 14)) >>> 0) / 4_294_967_296;
+  const fraudRate = 0.040 + seededFraction * 0.008;
   const end = new Date();
   const start = new Date(end.getTime() - days * 86_400_000);
   return {
