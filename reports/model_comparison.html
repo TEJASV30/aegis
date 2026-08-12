@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Model comparison</title>
+<style>body{font:15px system-ui;max-width:1240px;margin:40px auto;padding:0 24px;color:#15231d}h1{font-size:2.5rem;margin-bottom:6px}
+h2{margin-top:32px}p{color:#617269;line-height:1.55}table{width:100%;border-collapse:collapse;font-size:.8rem}
+th,td{border-bottom:1px solid #dce5df;padding:10px;text-align:right}th:first-child,td:first-child{text-align:left}
+.scope{padding:16px;border-left:4px solid #167a5a;background:#eef8f2}code{font-size:.82em}</style></head>
+<body><p>Aegis · reproducible evidence</p><h1>Model comparison</h1><p>Temporal evaluation and release evidence</p><div class='scope'>Release <code>20260812T041508Z</code> · feature contract <code>v2</code><br>Untouched test: 2026-07-24T20:00:27.324605+00:00 to 2026-08-12T00:00:02+00:00 · 60,754 events · 2,746 fraud.<br>Ranking, calibration, and threshold evidence is measured. Monetary loss is explicitly simulated.</div><h2>Candidate selection-period comparison</h2><table><thead><tr><th>Candidate</th><th>accuracy</th><th>balanced accuracy</th><th>pr auc average precision</th><th>recall at fixed fpr</th><th>precision at k</th><th>brier score</th><th>expected calibration error</th></tr></thead><tbody><tr><td>logistic regression</td><td>0.9797</td><td>0.7949</td><td>0.7809</td><td>0.7000</td><td>0.9820</td><td>0.0168</td><td>0.0033</td></tr><tr><td>isolation forest</td><td>0.9563</td><td>0.5196</td><td>0.2019</td><td>0.0834</td><td>0.2800</td><td>0.0387</td><td>0.0127</td></tr><tr><td>xgboost</td><td>0.9911</td><td>0.9171</td><td>0.9161</td><td>0.8806</td><td>1.0000</td><td>0.0078</td><td>0.0017</td></tr><tr><td>lightgbm</td><td>0.9913</td><td>0.9188</td><td>0.9208</td><td>0.8863</td><td>1.0000</td><td>0.0075</td><td>0.0019</td></tr></tbody></table><h2>Selected release on untouched test period</h2><table><thead><tr><th>Candidate</th><th>accuracy</th><th>balanced accuracy</th><th>pr auc average precision</th><th>recall at fixed fpr</th><th>precision at k</th><th>brier score</th><th>expected calibration error</th></tr></thead><tbody><tr><td>lightgbm</td><td>0.9924</td><td>0.9292</td><td>0.9383</td><td>0.9057</td><td>1.0000</td><td>0.0065</td><td>0.0015</td></tr></tbody></table><h2>Feature ablation on untouched test period</h2><table><thead><tr><th>Candidate</th><th>accuracy</th><th>balanced accuracy</th><th>pr auc average precision</th><th>recall at fixed fpr</th><th>precision at k</th><th>brier score</th><th>expected calibration error</th></tr></thead><tbody><tr><td>base features only</td><td>0.9918</td><td>0.9253</td><td>0.9349</td><td>0.9060</td><td>0.9960</td><td>0.0070</td><td>0.0011</td></tr><tr><td>base plus customer velocity</td><td>0.9920</td><td>0.9268</td><td>0.9352</td><td>0.9024</td><td>0.9960</td><td>0.0071</td><td>0.0014</td></tr><tr><td>base plus customer device velocity</td><td>0.9924</td><td>0.9292</td><td>0.9383</td><td>0.9057</td><td>1.0000</td><td>0.0065</td><td>0.0015</td></tr></tbody></table><h2>Calibration comparison</h2><table><thead><tr><th>State</th><th>PR-AUC</th><th>Brier</th><th>ECE</th></tr></thead><tbody><tr><td>uncalibrated</td><td>0.9383</td><td>0.0117</td><td>0.0270</td></tr><tr><td>calibrated</td><td>0.9383</td><td>0.0065</td><td>0.0015</td></tr></tbody></table><h2>Bootstrap 95% intervals</h2><pre>{
+  &quot;pr_auc_average_precision&quot;: {
+    &quot;lower_95&quot;: 0.9302964562999292,
+    &quot;median&quot;: 0.9383036216639848,
+    &quot;upper_95&quot;: 0.9458984339113619
+  },
+  &quot;recall_at_fixed_fpr&quot;: {
+    &quot;lower_95&quot;: 0.8947469045884923,
+    &quot;median&quot;: 0.9053168244719592,
+    &quot;upper_95&quot;: 0.9169701383831027
+  },
+  &quot;brier_score&quot;: {
+    &quot;lower_95&quot;: 0.0060490970605194955,
+    &quot;median&quot;: 0.0065375897972170015,
+    &quot;upper_95&quot;: 0.007048749091350882
+  },
+  &quot;expected_calibration_error&quot;: {
+    &quot;lower_95&quot;: 0.0011134246526330977,
+    &quot;median&quot;: 0.001640694373171589,
+    &quot;upper_95&quot;: 0.002159690619702828
+  }
+}</pre><h2>Independent public benchmark</h2><p>CreditCardFraudDetection, OpenML data ID 1597; 42,722 untouched test rows and 52 fraud rows.</p><table><thead><tr><th>Candidate</th><th>accuracy</th><th>balanced accuracy</th><th>pr auc average precision</th><th>recall at fixed fpr</th><th>precision at k</th><th>brier score</th><th>expected calibration error</th></tr></thead><tbody><tr><td>logistic regression</td><td>0.9995</td><td>0.8173</td><td>0.7331</td><td>0.8077</td><td>0.0840</td><td>0.0004</td><td>0.0002</td></tr><tr><td>isolation forest</td><td>0.9988</td><td>0.5000</td><td>0.0381</td><td>0.5192</td><td>0.0560</td><td>0.0012</td><td>0.0003</td></tr><tr><td>xgboost</td><td>0.9995</td><td>0.8557</td><td>0.7571</td><td>0.8077</td><td>0.0840</td><td>0.0004</td><td>0.0002</td></tr><tr><td>lightgbm</td><td>0.9988</td><td>0.5000</td><td>0.0322</td><td>0.0000</td><td>0.0400</td><td>0.0012</td><td>0.0004</td></tr></tbody></table></body></html>

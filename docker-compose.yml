@@ -1,0 +1,216 @@
+x-airflow-environment: &airflow-environment
+  AIRFLOW__CORE__EXECUTOR: LocalExecutor
+  AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+  AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://fraud:fraud@postgres:5432/airflow
+  POSTGRES_DSN: postgresql://fraud:fraud@postgres:5432/fraud
+  MLFLOW_TRACKING_URI: http://mlflow:5000
+  MODEL_DIR: /opt/airflow/artifacts/model
+  CANDIDATE_MODEL_DIR: /opt/airflow/artifacts/candidate
+  FRAUD_DATA_DIR: /opt/airflow/data
+  FRAUD_REPORT_DIR: /opt/airflow/reports/drift
+  AEGIS_AIRFLOW_DEMO_MODE: ${AEGIS_AIRFLOW_DEMO_MODE:-false}
+
+x-airflow-volumes: &airflow-volumes
+  - ./airflow/dags:/opt/airflow/dags
+  - ./data:/opt/airflow/data
+  - ./artifacts:/opt/airflow/artifacts
+  - ./reports:/opt/airflow/reports
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: fraud
+      POSTGRES_USER: fraud
+      POSTGRES_PASSWORD: fraud
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deploy/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fraud -d fraud"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  db-migrate:
+    image: postgres:16-alpine
+    environment:
+      PGPASSWORD: fraud
+    command: >
+      sh -c 'for migration in /migrations/*.sql; do
+      echo "Applying $${migration}";
+      psql -v ON_ERROR_STOP=1 -h postgres -U fraud -d fraud -f "$${migration}";
+      done'
+    volumes:
+      - ./deploy/postgres/migrations:/migrations:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  mlflow:
+    build: .
+    command:
+      - mlflow
+      - server
+      - --host=0.0.0.0
+      - --port=5000
+      - --backend-store-uri=postgresql+psycopg2://fraud:fraud@postgres:5432/fraud
+      - --artifacts-destination=/mlartifacts
+      - --serve-artifacts
+    environment:
+      POSTGRES_DSN: postgresql://fraud:fraud@postgres:5432/fraud
+    ports:
+      - "5001:5000"
+    volumes:
+      - mlflow-artifacts:/mlartifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  airflow-init:
+    build:
+      context: .
+      dockerfile: deploy/airflow/Dockerfile
+    command: >
+      bash -c "airflow db migrate &&
+      (airflow users create --username admin --password admin --firstname Fraud
+      --lastname Admin --role Admin --email admin@example.local || true)"
+    environment: *airflow-environment
+    volumes: *airflow-volumes
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+
+  airflow-webserver:
+    build:
+      context: .
+      dockerfile: deploy/airflow/Dockerfile
+    command: airflow webserver
+    environment: *airflow-environment
+    ports:
+      - "8080:8080"
+    volumes: *airflow-volumes
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    build:
+      context: .
+      dockerfile: deploy/airflow/Dockerfile
+    command: airflow scheduler
+    environment: *airflow-environment
+    volumes: *airflow-volumes
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  api:
+    build:
+      context: .
+      target: production
+    environment:
+      POSTGRES_DSN: postgresql://fraud:fraud@postgres:5432/fraud
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_HTTP_REQUEST_TIMEOUT: "5"
+      MLFLOW_HTTP_REQUEST_MAX_RETRIES: "1"
+      MODEL_DIR: /app/artifacts/model
+      CANDIDATE_MODEL_DIR: /app/artifacts/candidate
+      ENABLE_DEMO_ENDPOINTS: "true"
+      PUBLIC_AIRFLOW_URL: http://localhost:8080
+      PUBLIC_MLFLOW_URL: http://localhost:5001
+      PUBLIC_SUPERSET_URL: http://localhost:8088/superset/dashboard/aegis-operations/
+      PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "8000:8000"
+    volumes:
+      # Releases are checksum-verified before loading. The API owns the two
+      # small current/previous pointer files so an explicit rollback can make
+      # a durable, atomic pointer swap before the in-memory model is replaced.
+      - ./artifacts:/app/artifacts
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+      mlflow:
+        condition: service_started
+
+  test:
+    profiles: ["test"]
+    build:
+      context: .
+      target: test
+    environment:
+      POSTGRES_DSN: postgresql://fraud:fraud@postgres:5432/fraud
+      ENABLE_DEMO_ENDPOINTS: "true"
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - api
+
+  locust:
+    image: locustio/locust:2.32.10
+    profiles: ["benchmark"]
+    volumes:
+      - ./load_tests:/mnt/locust:ro
+      - ./reports:/reports
+    depends_on:
+      - api
+
+  investigator-ui:
+    build: ./ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+  superset-init:
+    build:
+      context: .
+      dockerfile: deploy/superset/Dockerfile
+    command: >
+      bash -c "superset db upgrade &&
+      (superset fab create-admin --username admin --firstname Fraud --lastname Admin
+      --email admin@example.local --password admin || true) && superset init &&
+      python /app/pythonpath/bootstrap_aegis.py"
+    environment:
+      SUPERSET_SECRET_KEY: change-this-local-secret
+      SUPERSET_METADATA_DSN: postgresql+psycopg2://fraud:fraud@postgres:5432/superset
+      AEGIS_ANALYTICS_DSN: postgresql+psycopg2://fraud:fraud@postgres:5432/fraud
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+
+  superset:
+    build:
+      context: .
+      dockerfile: deploy/superset/Dockerfile
+    command: gunicorn --bind 0.0.0.0:8088 --workers 2 --timeout 120 "superset.app:create_app()"
+    environment:
+      SUPERSET_SECRET_KEY: change-this-local-secret
+      SUPERSET_METADATA_DSN: postgresql+psycopg2://fraud:fraud@postgres:5432/superset
+      AEGIS_ANALYTICS_DSN: postgresql+psycopg2://fraud:fraud@postgres:5432/fraud
+    ports:
+      - "8088:8088"
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-data:
+  mlflow-artifacts:
+  prometheus-data:

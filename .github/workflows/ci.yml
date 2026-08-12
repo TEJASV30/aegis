@@ -1,0 +1,37 @@
+name: Aegis verification
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+      - name: Start PostgreSQL and apply schema
+        run: |
+          docker compose up -d postgres
+          docker compose run --rm db-migrate
+      - name: Build verification, UI, orchestration, and analytics images
+        run: docker compose --profile test build test investigator-ui airflow-webserver superset-init
+      - name: Ruff
+        run: docker compose --profile test run --rm test ruff check src tests airflow load_tests
+      - name: Mypy
+        run: docker compose --profile test run --rm test mypy src/fraud_platform
+      - name: Unit and PostgreSQL integration tests
+        run: docker compose --profile test run --rm test pytest -q
+      - name: Validate Airflow DAG discovery
+        run: docker compose run --rm airflow-webserver airflow dags list
+      - name: Provision and verify Superset workspace
+        run: |
+          docker compose run --rm superset-init
+          ./scripts/verify_superset.sh
+      - name: Assert API image starts with production target
+        run: docker compose build api

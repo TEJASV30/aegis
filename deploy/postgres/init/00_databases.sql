@@ -1,0 +1,2 @@
+CREATE DATABASE airflow OWNER fraud;
+CREATE DATABASE superset OWNER fraud;
