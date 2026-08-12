@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Aegis load-test evidence</title>
+<style>body{font:15px system-ui;max-width:1180px;margin:40px auto;padding:0 24px;color:#15231d}
+h1{font-size:2.4rem} .scope{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.scope div{border:1px solid #dce5df;border-radius:12px;padding:15px} span{color:#66786e;font-size:.78rem}
+strong{display:block;margin-top:6px} table{width:100%;border-collapse:collapse;margin-top:24px;font-size:.82rem}
+th,td{border-bottom:1px solid #dce5df;padding:10px;text-align:right} th:nth-child(-n+2),td:nth-child(-n+2){text-align:left}
+.note{margin-top:24px;padding:16px;border-left:4px solid #167a5a;background:#eef8f2}</style></head>
+<body><p>Aegis · measured evidence</p><h1>Decision-serving load test</h1>
+<div class="scope"><div><span>Concurrent clients</span><strong>10</strong></div>
+<div><span>Decision requests</span><strong>818</strong></div>
+<div><span>Success rate</span><strong>100.00%</strong></div>
+<div><span>Throughput</span><strong>28.11 req/s</strong></div>
+<div><span>End-to-end p50</span><strong>180.0 ms</strong></div>
+<div><span>End-to-end p95</span><strong>270.0 ms</strong></div>
+<div><span>End-to-end p99</span><strong>400.0 ms</strong></div>
+<div><span>PostgreSQL rows</span><strong>405,879</strong></div></div>
+<p class="note">Measured 2026-08-12T04:00:20.179366+00:00 for release 20260812T035008Z over 30s.
+Hardware: {&#x27;platform&#x27;: &#x27;Linux-6.12.76-linuxkit-aarch64-with-glibc2.36&#x27;, &#x27;processor&#x27;: &#x27;containerized CPU&#x27;, &#x27;logical_cpu_count&#x27;: 10, &#x27;memory_gib&#x27;: 7.7500152587890625}. Component rows are server-reported timings carried in successful responses.</p>
+<table><thead><tr><th>Type</th><th>Metric</th><th>Requests</th><th>Failures</th><th>p50 ms</th><th>p95 ms</th><th>p99 ms</th><th>RPS</th></tr></thead>
+<tbody><tr><td>POST</td><td>end-to-end decision</td><td>818</td><td>0</td><td>180</td><td>270</td><td>400</td><td>28.109081145930134</td></tr><tr><td>SERVER</td><td>server end to end</td><td>818</td><td>0</td><td>160</td><td>250</td><td>290</td><td>28.109081145930134</td></tr><tr><td>SERVER</td><td>server feature query</td><td>818</td><td>0</td><td>3</td><td>21</td><td>29</td><td>28.109081145930134</td></tr><tr><td>SERVER</td><td>server model + explanation</td><td>818</td><td>0</td><td>150</td><td>230</td><td>260</td><td>28.109081145930134</td></tr><tr><td></td><td>Aggregated</td><td>3272</td><td>0</td><td>140</td><td>250</td><td>290</td><td>112.43632458372053</td></tr></tbody></table></body></html>
