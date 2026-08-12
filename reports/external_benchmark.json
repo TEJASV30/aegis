@@ -1,0 +1,280 @@
+{
+  "benchmark": "CreditCardFraudDetection",
+  "openml_data_id": 1597,
+  "source_url": "https://www.openml.org/d/1597",
+  "license": "Database Contents License (DbCL) 1.0",
+  "measured_at": "2026-08-12T03:58:43.316955+00:00",
+  "split_policy": "first 60% train, next 15% calibration, next 10% threshold selection, final 15% untouched test; source row order preserved because OpenML data ID 1597 omits the original Time field",
+  "ordering_field": "source_row_order",
+  "rows": 284807,
+  "fraud_rows": 492,
+  "test_rows": 42722,
+  "test_fraud_rows": 52,
+  "results": {
+    "logistic_regression": {
+      "metrics": {
+        "accuracy": 0.9995318571227939,
+        "balanced_accuracy": 0.8172959744731481,
+        "fraud_precision": 0.9705882352941176,
+        "fraud_recall": 0.6346153846153846,
+        "fraud_f1": 0.7674418604651163,
+        "policy_accuracy": 0.9983614999297785,
+        "policy_fraud_precision": 0.41,
+        "policy_fraud_recall": 0.7884615384615384,
+        "pr_auc_average_precision": 0.7331239276395732,
+        "recall_at_fixed_fpr": 0.8076923076923077,
+        "precision_at_k": 0.084,
+        "brier_score": 0.0004487157844501878,
+        "expected_calibration_error": 0.00022265873487542474,
+        "review_count": 0.0,
+        "review_capacity": 500.0,
+        "review_candidates_before_capacity": 0.0,
+        "review_suppressed_by_capacity": 0.0,
+        "baseline_approve_all_fraud_loss": 6168.880000000001,
+        "policy_residual_fraud_loss": 2353.03,
+        "policy_review_operating_cost": 0.0,
+        "policy_legitimate_friction_cost": 1475.0,
+        "policy_total_simulated_loss": 3828.03,
+        "simulated_net_monetary_loss_avoided": 2340.850000000001
+      },
+      "thresholds": {
+        "review": 0.00841547636655283,
+        "block": 0.008415476366552831,
+        "target_fpr": 0.01,
+        "review_capacity": 500,
+        "review_target_recall": 0.9
+      },
+      "bootstrap_95_intervals": {
+        "pr_auc_average_precision": {
+          "lower_95": 0.593719247791121,
+          "median": 0.7232120562969473,
+          "upper_95": 0.8490345086725287
+        },
+        "recall_at_fixed_fpr": {
+          "lower_95": 0.6730769230769231,
+          "median": 0.8076923076923077,
+          "upper_95": 0.9038461538461539
+        },
+        "brier_score": {
+          "lower_95": 0.00032712188195788865,
+          "median": 0.00045741241252183465,
+          "upper_95": 0.0006300285230613277
+        },
+        "expected_calibration_error": {
+          "lower_95": 0.00013782973200826453,
+          "median": 0.0002698943515547052,
+          "upper_95": 0.0004181242158099806
+        }
+      },
+      "simulation_metadata": {
+        "loss_simulation_assumptions": {
+          "fraud_recovery_rate_if_blocked": 1.0,
+          "fraud_recovery_rate_if_reviewed": 0.8,
+          "review_operating_cost": 5.0,
+          "legitimate_review_friction_cost": 3.0,
+          "legitimate_block_friction_cost": 25.0
+        }
+      }
+    },
+    "isolation_forest": {
+      "metrics": {
+        "accuracy": 0.998782828519264,
+        "balanced_accuracy": 0.5,
+        "fraud_precision": 0.0,
+        "fraud_recall": 0.0,
+        "fraud_f1": 0.0,
+        "policy_accuracy": 0.9859557136838163,
+        "policy_fraud_precision": 0.04785478547854786,
+        "policy_fraud_recall": 0.5576923076923077,
+        "pr_auc_average_precision": 0.038058446043859134,
+        "recall_at_fixed_fpr": 0.5192307692307693,
+        "precision_at_k": 0.056,
+        "brier_score": 0.001215482468947346,
+        "expected_calibration_error": 0.00034297767376887615,
+        "review_count": 500.0,
+        "review_capacity": 500.0,
+        "review_candidates_before_capacity": 3275.0,
+        "review_suppressed_by_capacity": 2775.0,
+        "baseline_approve_all_fraud_loss": 6168.880000000001,
+        "policy_residual_fraud_loss": 3641.174,
+        "policy_review_operating_cost": 2500.0,
+        "policy_legitimate_friction_cost": 3997.0,
+        "policy_total_simulated_loss": 10138.173999999999,
+        "simulated_net_monetary_loss_avoided": -3969.293999999998
+      },
+      "thresholds": {
+        "review": 0.0009235740052885949,
+        "block": 0.0010925600911663776,
+        "target_fpr": 0.01,
+        "review_capacity": 500,
+        "review_target_recall": 0.9
+      },
+      "bootstrap_95_intervals": {
+        "pr_auc_average_precision": {
+          "lower_95": 0.026161817599473943,
+          "median": 0.03830656316819139,
+          "upper_95": 0.05361503130174223
+        },
+        "recall_at_fixed_fpr": {
+          "lower_95": 0.3552884615384615,
+          "median": 0.5192307692307693,
+          "upper_95": 0.6346153846153846
+        },
+        "brier_score": {
+          "lower_95": 0.001215443263902371,
+          "median": 0.0012154854348965377,
+          "upper_95": 0.0012155406979564437
+        },
+        "expected_calibration_error": {
+          "lower_95": 0.0003426096105473568,
+          "median": 0.0003429542045610772,
+          "upper_95": 0.00034327443682918
+        }
+      },
+      "simulation_metadata": {
+        "loss_simulation_assumptions": {
+          "fraud_recovery_rate_if_blocked": 1.0,
+          "fraud_recovery_rate_if_reviewed": 0.8,
+          "review_operating_cost": 5.0,
+          "legitimate_review_friction_cost": 3.0,
+          "legitimate_block_friction_cost": 25.0
+        }
+      }
+    },
+    "xgboost": {
+      "metrics": {
+        "accuracy": 0.9995318571227939,
+        "balanced_accuracy": 0.8557106415965099,
+        "fraud_precision": 0.8809523809523809,
+        "fraud_recall": 0.7115384615384616,
+        "fraud_f1": 0.7872340425531915,
+        "policy_accuracy": 0.9971911427367632,
+        "policy_fraud_precision": 0.2702702702702703,
+        "policy_fraud_recall": 0.7692307692307693,
+        "pr_auc_average_precision": 0.7571427932675716,
+        "recall_at_fixed_fpr": 0.8076923076923077,
+        "precision_at_k": 0.084,
+        "brier_score": 0.0003955401009281767,
+        "expected_calibration_error": 0.00022832033285204964,
+        "review_count": 0.0,
+        "review_capacity": 500.0,
+        "review_candidates_before_capacity": 0.0,
+        "review_suppressed_by_capacity": 0.0,
+        "baseline_approve_all_fraud_loss": 6168.880000000001,
+        "policy_residual_fraud_loss": 2360.09,
+        "policy_review_operating_cost": 0.0,
+        "policy_legitimate_friction_cost": 2700.0,
+        "policy_total_simulated_loss": 5060.09,
+        "simulated_net_monetary_loss_avoided": 1108.7900000000009
+      },
+      "thresholds": {
+        "review": 0.0061889169930019125,
+        "block": 0.006188916993001913,
+        "target_fpr": 0.01,
+        "review_capacity": 500,
+        "review_target_recall": 0.9
+      },
+      "bootstrap_95_intervals": {
+        "pr_auc_average_precision": {
+          "lower_95": 0.6139309578922314,
+          "median": 0.7521606505845316,
+          "upper_95": 0.8516052282079674
+        },
+        "recall_at_fixed_fpr": {
+          "lower_95": 0.6822115384615385,
+          "median": 0.8076923076923077,
+          "upper_95": 0.9038461538461539
+        },
+        "brier_score": {
+          "lower_95": 0.0002790411639209038,
+          "median": 0.00039677935732599235,
+          "upper_95": 0.0005727888190785119
+        },
+        "expected_calibration_error": {
+          "lower_95": 0.00014334108304729095,
+          "median": 0.0002534306938237219,
+          "upper_95": 0.00042701399053384967
+        }
+      },
+      "simulation_metadata": {
+        "loss_simulation_assumptions": {
+          "fraud_recovery_rate_if_blocked": 1.0,
+          "fraud_recovery_rate_if_reviewed": 0.8,
+          "review_operating_cost": 5.0,
+          "legitimate_review_friction_cost": 3.0,
+          "legitimate_block_friction_cost": 25.0
+        }
+      }
+    },
+    "lightgbm": {
+      "metrics": {
+        "accuracy": 0.998782828519264,
+        "balanced_accuracy": 0.5,
+        "fraud_precision": 0.0,
+        "fraud_recall": 0.0,
+        "fraud_f1": 0.0,
+        "policy_accuracy": 0.9875473994663171,
+        "policy_fraud_precision": 0.02,
+        "policy_fraud_recall": 0.19230769230769232,
+        "pr_auc_average_precision": 0.03216609895868717,
+        "recall_at_fixed_fpr": 0.0,
+        "precision_at_k": 0.04,
+        "brier_score": 0.0011839766321251246,
+        "expected_calibration_error": 0.0003677747111740584,
+        "review_count": 500.0,
+        "review_capacity": 500.0,
+        "review_candidates_before_capacity": 42722.0,
+        "review_suppressed_by_capacity": 42222.0,
+        "baseline_approve_all_fraud_loss": 6168.880000000001,
+        "policy_residual_fraud_loss": 5142.92,
+        "policy_review_operating_cost": 2500.0,
+        "policy_legitimate_friction_cost": 1470.0,
+        "policy_total_simulated_loss": 9112.92,
+        "simulated_net_monetary_loss_avoided": -2944.039999999999
+      },
+      "thresholds": {
+        "review": 0.0002775936686792946,
+        "block": 1.0,
+        "target_fpr": 0.01,
+        "review_capacity": 500,
+        "review_target_recall": 0.9
+      },
+      "bootstrap_95_intervals": {
+        "pr_auc_average_precision": {
+          "lower_95": 0.022521222390093007,
+          "median": 0.031650414945734034,
+          "upper_95": 0.042109241497496404
+        },
+        "recall_at_fixed_fpr": {
+          "lower_95": 0.0,
+          "median": 0.0,
+          "upper_95": 0.0
+        },
+        "brier_score": {
+          "lower_95": 0.0011772221905010478,
+          "median": 0.001184285555393043,
+          "upper_95": 0.0011918651405041648
+        },
+        "expected_calibration_error": {
+          "lower_95": 0.0003329340198634506,
+          "median": 0.0003655713589109308,
+          "upper_95": 0.0003910076672025179
+        }
+      },
+      "simulation_metadata": {
+        "loss_simulation_assumptions": {
+          "fraud_recovery_rate_if_blocked": 1.0,
+          "fraud_recovery_rate_if_reviewed": 0.8,
+          "review_operating_cost": 5.0,
+          "legitimate_review_friction_cost": 3.0,
+          "legitimate_block_friction_cost": 25.0
+        }
+      }
+    }
+  },
+  "limitations": [
+    "The public data is anonymized and contains no customer/device identity for velocity parity testing.",
+    "OpenML data ID 1597 omits the original elapsed-time field; this evaluation preserves source row order but cannot prove a timestamp-based split.",
+    "Monetary loss remains a policy simulation, not observed causal savings."
+  ]
+}
