@@ -1,0 +1,6 @@
+# Keep application packages compatible with the Airflow 2.10.3 base image.
+cffi==1.17.1
+cryptography==43.0.3
+pandas==2.1.4
+protobuf==4.25.5
+sqlalchemy==1.4.54
